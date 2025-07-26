@@ -1,0 +1,5 @@
+runpod
+faster-whisper
+torch
+torchaudio
+transformers
