@@ -32,7 +32,7 @@ def handler(job):
         
         try:
             # Load Faster Whisper model
-            model = WhisperModel("large-v3", device="cuda", compute_type="float16")
+            model = WhisperModel("base", device="cuda", compute_type="float16")
             
             # Transcribe audio with word timestamps
             segments, info = model.transcribe(
