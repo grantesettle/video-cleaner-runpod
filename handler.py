@@ -1,29 +1,31 @@
 import runpod
-import base64
 import tempfile
 import os
+import requests
 from faster_whisper import WhisperModel
 
 def handler(job):
     """
     Handler function for RunPod serverless endpoint
-    Processes audio files and detects profanity timestamps
+    Processes audio files via URL and detects profanity timestamps
     """
     try:
         # Get input data
         job_input = job['input']
-        audio_data = job_input.get('audio_data')
+        audio_url = job_input.get('audio_url')
         profanity_list = job_input.get('profanity_list', [])
         language = job_input.get('language', 'en')
         
-        if not audio_data:
-            return {"error": "No audio_data provided"}
+        if not audio_url:
+            return {"error": "No audio_url provided"}
         
-        # Decode base64 audio data
+        # Download audio file from URL
         try:
-            audio_bytes = base64.b64decode(audio_data)
+            response = requests.get(audio_url, timeout=60)
+            response.raise_for_status()
+            audio_bytes = response.content
         except Exception as e:
-            return {"error": f"Failed to decode audio data: {str(e)}"}
+            return {"error": f"Failed to download audio from URL: {str(e)}"}
         
         # Create temporary file for audio
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_audio:
@@ -31,7 +33,7 @@ def handler(job):
             temp_audio_path = temp_audio.name
         
         try:
-            # Load Faster Whisper model
+            # Load Faster Whisper model (base for disk space constraints)
             model = WhisperModel("base", device="cuda", compute_type="float16")
             
             # Transcribe audio with word timestamps
